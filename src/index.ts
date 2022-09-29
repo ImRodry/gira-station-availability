@@ -1,3 +1,4 @@
+if (process.env.NODE_ENV !== "production") require("dotenv").config()
 import { Collection } from "@discordjs/collection"
 
 import { GeoDataResponse, parseStationData, StationData } from "./util"
