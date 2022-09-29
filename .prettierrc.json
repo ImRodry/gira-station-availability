@@ -1,0 +1,8 @@
+{
+	"trailingComma": "es5",
+	"useTabs": true,
+	"semi": false,
+	"proseWrap": "never",
+	"printWidth": 140,
+	"arrowParens": "avoid"
+}

@@ -1,0 +1,20 @@
+{
+	"name": "gira-station-availability",
+	"version": "1.0.0",
+	"description": "",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@discordjs/collection": "^1.1.0",
+		"dotenv": "^16.0.2",
+		"mongodb": "^4.10.0"
+	},
+	"devDependencies": {
+		"@types/node": "^18.7.23"
+	}
+}
