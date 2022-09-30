@@ -40,6 +40,32 @@ export async function main() {
 			},
 		}))
 	)
+	await db.collection<StasData>("stats").bulkWrite(
+		stationData.features.map(f => ({
+			updateOne: {
+				filter: { id: parseInt(f.properties.id_expl) },
+				update: {
+					$push: {
+						stats: {
+							updatedAt: Date.parse(f.properties.update_date),
+							numBikes: f.properties.num_bicicletas,
+							status: f.properties.estado,
+						},
+					},
+				},
+				upsert: true,
+			},
+		}))
+	)
 
 	setTimeout(main, 10_000)
+}
+
+interface StasData {
+	id: number
+	stats: {
+		updatedAt: number
+		numBikes: number
+		status: "repair" | "active"
+	}[]
 }
