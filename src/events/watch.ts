@@ -1,14 +1,14 @@
 import { yellow, red, green, blue, underline, unstyle } from "ansi-colors"
-import { favouriteStations, favouriteProps, toBeReleased } from "../config.json"
 import { db } from "../dbConnection"
-import { sendWebhookMessage, StationData } from "../util"
+import { Config, sendWebhookMessage, StationData } from "../util"
 
 db.collection<StationData>("stations")
 	.watch([], { fullDocumentBeforeChange: "whenAvailable" })
 	.on("change", async change => {
 		if (change.operationType !== "update") return
 		const fullDocument = (await db.collection<StationData>("stations").findOne({ _id: change.documentKey._id }))!,
-			isFavourite = favouriteStations.includes(fullDocument.id)
+			config = (await db.collection<Config>("config").findOne({ name: "config" }))!,
+			isFavourite = config.favouriteStations.includes(fullDocument.id)
 		for (const [updatedKey, updatedValue] of Object.entries(change.updateDescription!.updatedFields!)) {
 			if (["updatedAt", "bikePercentage"].includes(updatedKey)) continue
 			if (change.fullDocumentBeforeChange?.[updatedKey as keyof StationData])
@@ -26,9 +26,9 @@ db.collection<StationData>("stations")
 					)
 				)
 			if (
-				favouriteProps.includes(updatedKey) ||
+				config.favouriteProps.includes(updatedKey as keyof StationData) ||
 				isFavourite ||
-				(toBeReleased.includes(fullDocument.id) && change.fullDocumentBeforeChange?.status === "repair")
+				(config.toBeReleased.includes(fullDocument.id) && change.fullDocumentBeforeChange?.status === "repair")
 			)
 				await sendWebhookMessage({
 					content: `${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação ${fullDocument.id} passou de __${

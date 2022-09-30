@@ -62,3 +62,11 @@ interface GiraStationFeature {
 		bbox: number[]
 	}
 }
+
+export interface Config {
+	name: "config"
+	favouriteStations: number[]
+	toBeReleased: number[]
+	favouriteProps: (keyof StationData)[]
+	buggedIDs: number[]
+}
