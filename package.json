@@ -10,6 +10,9 @@
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
+	"engines": {
+		"node": "18.x"
+	},
 	"dependencies": {
 		"@discordjs/collection": "^1.1.0",
 		"ansi-colors": "^4.1.3",
