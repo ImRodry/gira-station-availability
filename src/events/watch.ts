@@ -10,7 +10,7 @@ db.collection<StationData>("stations")
 		const fullDocument = (await db.collection<StationData>("stations").findOne({ _id: change.documentKey._id }))!,
 			isFavourite = favouriteStations.includes(fullDocument.id)
 		for (const [updatedKey, updatedValue] of Object.entries(change.updateDescription!.updatedFields!)) {
-			if (updatedKey === "updatedAt") continue
+			if (["updatedAt", "bikePercentage"].includes(updatedKey)) continue
 			if (change.fullDocumentBeforeChange?.[updatedKey as keyof StationData])
 				console.log(
 					(isFavourite ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
@@ -38,12 +38,11 @@ db.collection<StationData>("stations")
 		}
 	})
 
-const keysToStrings: Record<keyof Omit<StationData, "updatedAt">, string> = {
+const keysToStrings: Record<keyof Omit<StationData, "updatedAt" | "bikePercentage">, string> = {
 	id: "O ID",
 	coordinates: "As coordenadas",
 	name: "O nome",
 	numBikes: "O número de bicicletas",
 	numDocks: "O número de docas",
-	bikePercentage: "A percentagem de bicicletas",
 	status: "O estado",
 }
