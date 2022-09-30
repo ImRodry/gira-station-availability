@@ -1,9 +1,23 @@
+import { setTimeout } from "node:timers/promises"
+
 export async function sendWebhookMessage(options: WebhookMessageOptions, wait = false) {
-	return fetch(`${process.env.DISCORD_WEBHOOK_URL}?wait=${wait}`, {
+	let req = await fetch(`${process.env.DISCORD_WEBHOOK_URL}?wait=${wait}`, {
 		method: "POST",
 		body: JSON.stringify(options),
 		headers: { "Content-Type": "application/json" },
-	}).then(res => (wait ? res.json() : null))
+	})
+
+	while (req.status === 429) {
+		console.log("Got rate limited")
+		const rateLimitReset = parseInt(req.headers.get("x-ratelimit-reset")!)
+		await setTimeout(rateLimitReset - Date.now())
+		req = await fetch(`${process.env.DISCORD_WEBHOOK_URL}?wait=${wait}`, {
+			method: "POST",
+			body: JSON.stringify(options),
+			headers: { "Content-Type": "application/json" },
+		})
+	}
+	return req
 }
 
 interface WebhookMessageOptions {
