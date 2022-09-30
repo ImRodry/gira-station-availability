@@ -1,31 +1,45 @@
 if (process.env.NODE_ENV !== "production") require("dotenv").config()
-import { Collection } from "@discordjs/collection"
+require("./dbConnection")
+import { readdirSync } from "node:fs"
+import { db } from "./dbConnection"
+import { GiraListStationsResponse, StationData } from "./util"
 
-import { GeoDataResponse, parseStationData, StationData } from "./util"
-
-async function main() {
-	const rawData = await fetch("https://dados.gov.pt/en/datasets/r/c5c9e585-8990-4e19-a720-5c0ac3191705")
-			// Result is a CSV file, so we need to parse it as text
-			.then(r => r.text())
-			// We then isolate each entry by splitting on newlines and filtering empty lines
-			.then(d => d.split("\n").filter(Boolean)),
-		availabilityData = await fetch(
-			"https://services.arcgis.com/1dSrzEWVQn5kHHyK/arcgis/rest/services/Ciclovias/FeatureServer/3/query?outFields=N_DOCAS,ID_C&where=1%3D1&f=geojson"
-		)
-			.then(r => r.json() as Promise<GeoDataResponse>)
-			.then(r => r.features.map(f => f.properties))
-
-	// Remove the first line as it only contains the names of the parameters
-	rawData.shift()
-	const stationData = new Collection(
-		(rawData.map(d => parseStationData(d, availabilityData)).filter(d => typeof d !== "string") as StationData[])
-			.sort((a, b) => b.percentEnabled - a.percentEnabled + (a.stationId - b.stationId))
-			.map(s => [s.stationId, s])
-	)
-
-	console.log(stationData.map(s => s.bikesAvailable).reduce((a, b) => a + b))
+if (!process.env.GIRA_API_KEY) {
+	console.log("No API key provided. Please set the GIRA_API_KEY environment variable.")
+	process.exit(1)
 }
 
-main()
+readdirSync("./dist/events")
+	.filter(path => path.endsWith(".js"))
+	.forEach(file => require(`./events/${file}`))
 
-setInterval(main, 10_000)
+export async function main() {
+	if (!db) return console.error("DB is not ready yet!")
+	const stationData = await fetch("https://emel.city-platform.com/opendata/gira/station/list", {
+		headers: { api_key: process.env.GIRA_API_KEY! },
+	}).then(r => r.json() as Promise<GiraListStationsResponse>)
+
+	await db.collection<StationData>("stations").bulkWrite(
+		stationData.features.map(f => ({
+			updateOne: {
+				filter: {
+					id: parseInt(f.properties.id_expl),
+				},
+				update: {
+					$set: {
+						coordinates: f.geometry.coordinates[0],
+						name: f.properties.desig_comercial,
+						numBikes: f.properties.num_bicicletas,
+						numDocks: f.properties.num_docas,
+						bikePercentage: Math.round(f.properties.racio * 100),
+						status: f.properties.estado,
+						updatedAt: Date.parse(f.properties.update_date),
+					},
+				},
+				upsert: true,
+			},
+		}))
+	)
+
+	setTimeout(main, 10_000)
+}
