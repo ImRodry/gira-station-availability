@@ -11,12 +11,13 @@ db.collection<StationData>("stations")
 			isFavourite = config.favouriteStations.includes(fullDocument.id)
 		for (const [updatedKey, updatedValue] of Object.entries(change.updateDescription!.updatedFields!)) {
 			if (["updatedAt", "bikePercentage"].includes(updatedKey)) continue
-			if (change.fullDocumentBeforeChange?.[updatedKey as keyof StationData])
+			const oldValue = change.fullDocumentBeforeChange?.[updatedKey as keyof StationData]
+			if (oldValue)
 				console.log(
 					(isFavourite ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
-						`Property ${yellow(updatedKey)} changed from ${red(
-							`${change.fullDocumentBeforeChange[updatedKey as keyof StationData]}`
-						)} to ${green(`${updatedValue}`)} on station ${blue(`${fullDocument.id}`)}`
+						`Property ${yellow(updatedKey)} changed from ${red(`${oldValue}`)} to ${green(`${updatedValue}`)} on station ${blue(
+							`${fullDocument.id}`
+						)}`
 					)
 				)
 			else
@@ -31,12 +32,29 @@ db.collection<StationData>("stations")
 				(config.toBeReleased.includes(fullDocument.id) && change.fullDocumentBeforeChange?.status === "repair")
 			)
 				await sendWebhookMessage({
-					content: `${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação ${fullDocument.id} passou de __${
-						change.fullDocumentBeforeChange?.[updatedKey as keyof StationData]
-					}__ para **${updatedValue}**`,
+					content: `${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação ${
+						fullDocument.id
+					} passou de __${oldValue}__ para **${updatedValue}** ${getEmojiForChange(updatedValue, oldValue)}`,
 				})
 		}
 	})
+
+type ValueOf<T> = T[keyof T]
+
+function getEmojiForChange<T extends ValueOf<StationData>>(updatedValue: T, oldValue?: T) {
+	switch (typeof oldValue) {
+		case "string": {
+			if (updatedValue === "active") return "✅"
+			else return "⚒️"
+		}
+		case "number": {
+			if (updatedValue > (oldValue ?? 0)) return "✅"
+			else return "❌"
+		}
+		default:
+			return "❓"
+	}
+}
 
 const keysToStrings: Record<keyof Omit<StationData, "updatedAt" | "bikePercentage">, string> = {
 	id: "O ID",
