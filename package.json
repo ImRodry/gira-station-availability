@@ -21,6 +21,6 @@
 	},
 	"devDependencies": {
 		"@types/node": "^18.7.23",
-		"dotenv": "^16.0.2"
+		"dotenv": "^16.0.3"
 	}
 }
