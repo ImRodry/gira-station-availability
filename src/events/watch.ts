@@ -1,4 +1,4 @@
-import { yellow, red, green, blue, underline } from "ansi-colors"
+import { yellow, red, green, blue, underline, unstyle } from "ansi-colors"
 import { favouriteStations, favouriteProps, toBeReleased } from "../config.json"
 import { db } from "../dbConnection"
 import { sendWebhookMessage, StationData } from "../util"
@@ -13,13 +13,18 @@ db.collection<StationData>("stations")
 			if (updatedKey === "updatedAt") continue
 			if (change.fullDocumentBeforeChange?.[updatedKey as keyof StationData])
 				console.log(
-					(isFavourite ? underline : (s: string) => s)(
+					(isFavourite ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
 						`Property ${yellow(updatedKey)} changed from ${red(
 							`${change.fullDocumentBeforeChange[updatedKey as keyof StationData]}`
 						)} to ${green(`${updatedValue}`)} on station ${blue(`${fullDocument.id}`)}`
 					)
 				)
-			else console.log(`Property ${yellow(updatedKey)} updated to ${green(`${updatedValue}`)} on station ${blue(`${fullDocument.id}`)}`)
+			else
+				console.log(
+					(isFavourite ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
+						`Property ${yellow(updatedKey)} updated to ${green(`${updatedValue}`)} on station ${blue(`${fullDocument.id}`)}`
+					)
+				)
 			if (
 				favouriteProps.includes(updatedKey) ||
 				isFavourite ||
