@@ -1,6 +1,7 @@
 if (process.env.NODE_ENV !== "production") require("dotenv").config()
 require("./dbConnection")
 import { readdirSync } from "node:fs"
+import { buggedIDs } from "./config.json"
 import { db } from "./dbConnection"
 import { GiraListStationsResponse, StationData } from "./util"
 
@@ -17,10 +18,12 @@ export async function main() {
 	if (!db) return console.error("DB is not ready yet!")
 	const stationData = await fetch("https://emel.city-platform.com/opendata/gira/station/list", {
 		headers: { api_key: process.env.GIRA_API_KEY! },
-	}).then(r => r.json() as Promise<GiraListStationsResponse>)
+	})
+		.then(r => r.json() as Promise<GiraListStationsResponse>)
+		.then(d => d.features.filter(f => !buggedIDs.includes(parseInt(f.properties.id_expl))))
 
 	await db.collection<StationData>("stations").bulkWrite(
-		stationData.features.map(f => ({
+		stationData.map(f => ({
 			updateOne: {
 				filter: {
 					id: parseInt(f.properties.id_expl),
@@ -40,23 +43,27 @@ export async function main() {
 			},
 		}))
 	)
-	await db.collection<StasData>("stats").bulkWrite(
-		stationData.features.map(f => ({
-			updateOne: {
-				filter: { id: parseInt(f.properties.id_expl) },
-				update: {
-					$push: {
-						stats: {
-							updatedAt: Date.parse(f.properties.update_date),
-							numBikes: f.properties.num_bicicletas,
-							status: f.properties.estado,
+	await db
+		.collection<StasData>("stats")
+		.bulkWrite(
+			stationData.map(f => ({
+				updateOne: {
+					filter: { id: parseInt(f.properties.id_expl) },
+					update: {
+						$push: {
+							stats: {
+								updatedAt: Date.parse(f.properties.update_date),
+								numBikes: f.properties.num_bicicletas,
+								status: f.properties.estado,
+							},
 						},
 					},
+					upsert: true,
 				},
-				upsert: true,
-			},
-		}))
-	)
+			}))
+			// Ignore errors due to duplicate entries
+		)
+		.catch(() => null)
 
 	setTimeout(main, 10_000)
 }
