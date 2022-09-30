@@ -42,7 +42,7 @@ db.collection<StationData>("stations")
 type ValueOf<T> = T[keyof T]
 
 function getEmojiForChange<T extends ValueOf<StationData>>(updatedValue: T, oldValue?: T) {
-	switch (typeof oldValue) {
+	switch (typeof updatedValue) {
 		case "string": {
 			if (updatedValue === "active") return "✅"
 			else return "⚒️"
