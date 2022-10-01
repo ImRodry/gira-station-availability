@@ -33,7 +33,7 @@ db.collection<StationData>("stations")
 			)
 				await sendWebhookMessage({
 					content: `${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação ${
-						fullDocument.id
+						fullDocument.name
 					} passou de __${oldValue}__ para **${updatedValue}** ${getEmojiForChange(updatedValue, oldValue)}`,
 				})
 		}
