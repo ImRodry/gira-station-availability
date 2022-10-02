@@ -32,9 +32,9 @@ db.collection<StationData>("stations")
 				(config.toBeReleased.includes(fullDocument.id) && change.fullDocumentBeforeChange?.status === "repair")
 			)
 				await sendWebhookMessage({
-					content: `${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação __${
+					content: `${getEmojiForChange(updatedValue, oldValue)} ${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação __${
 						fullDocument.name
-					}__ passou de _${oldValue}_ para **${updatedValue}** ${getEmojiForChange(updatedValue, oldValue)}`,
+					}__ passou de _${oldValue}_ para **${updatedValue}**`,
 				})
 		}
 	})
