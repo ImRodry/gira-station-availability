@@ -1,6 +1,6 @@
 import { yellow, red, green, blue, underline, unstyle } from "ansi-colors"
 import { db } from "../dbConnection"
-import { Config, sendWebhookMessage, StationData } from "../util"
+import { Config, crosspost, sendWebhookMessage, StationData } from "../util"
 
 db.collection<StationData>("stations")
 	.watch([], { fullDocumentBeforeChange: "whenAvailable" })
@@ -8,13 +8,13 @@ db.collection<StationData>("stations")
 		if (change.operationType !== "update") return
 		const fullDocument = (await db.collection<StationData>("stations").findOne({ _id: change.documentKey._id }))!,
 			config = (await db.collection<Config>("config").findOne({ name: "config" }))!,
-			isFavourite = config.favouriteStations.includes(fullDocument.id)
+			isFavouriteStation = config.favouriteStations.includes(fullDocument.id)
 		for (const [updatedKey, updatedValue] of Object.entries(change.updateDescription!.updatedFields!)) {
 			if (["updatedAt", "bikePercentage"].includes(updatedKey)) continue
 			const oldValue = change.fullDocumentBeforeChange?.[updatedKey as keyof StationData]
 			if (oldValue)
 				console.log(
-					(isFavourite ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
+					(isFavouriteStation ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
 						`Property ${yellow(updatedKey)} changed from ${red(`${oldValue}`)} to ${green(`${updatedValue}`)} on station ${blue(
 							`${fullDocument.id}`
 						)}`
@@ -22,20 +22,23 @@ db.collection<StationData>("stations")
 				)
 			else
 				console.log(
-					(isFavourite ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
+					(isFavouriteStation ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
 						`Property ${yellow(updatedKey)} updated to ${green(`${updatedValue}`)} on station ${blue(`${fullDocument.id}`)}`
 					)
 				)
 			if (
 				config.favouriteProps.includes(updatedKey as keyof StationData) ||
-				isFavourite ||
+				isFavouriteStation ||
 				(config.toBeReleased.includes(fullDocument.id) && change.fullDocumentBeforeChange?.status === "repair")
-			)
-				await sendWebhookMessage({
+			) {
+				const message = await sendWebhookMessage({
 					content: `${getEmojiForChange(updatedValue, oldValue)} ${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação __${
 						fullDocument.name
 					}__ passou de _${oldValue}_ para **${updatedValue}**`,
-				})
+				}).then(res => res.json() as Promise<Message>)
+
+				if (config.favouriteProps.includes(updatedKey as keyof StationData)) await crosspost(message.channel_id, message.id)
+			}
 		}
 	})
 
@@ -63,4 +66,30 @@ const keysToStrings: Record<keyof Omit<StationData, "updatedAt" | "bikePercentag
 	numBikes: "O número de bicicletas",
 	numDocks: "O número de docas",
 	status: "O estado",
+}
+
+interface Message {
+	id: string
+	type: number
+	content: string
+	channel_id: string
+	author: {
+		bot: boolean
+		id: string
+		username: string
+		avatar: string
+		discriminator: string
+	}
+	attachments: never[]
+	embeds: never[]
+	mentions: never[]
+	mention_roles: never[]
+	pinned: boolean
+	mention_everyone: boolean
+	tts: boolean
+	timestamp: string
+	edited_timestamp: string | null
+	flags: number
+	components: never[]
+	webhook_id: string
 }

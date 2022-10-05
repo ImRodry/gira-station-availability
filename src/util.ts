@@ -1,5 +1,14 @@
 import { setTimeout } from "node:timers/promises"
 
+export function crosspost(channelId: string, messageId: string) {
+	return fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/crosspost`, {
+		method: "POST",
+		headers: {
+			Authorization: `Bot ${process.env.DISCORD_TOKEN}`,
+		},
+	})
+}
+
 export async function sendWebhookMessage(options: WebhookMessageOptions, wait = false) {
 	let req = await fetch(`${process.env.DISCORD_WEBHOOK_URL}?wait=${wait}`, {
 		method: "POST",
