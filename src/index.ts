@@ -13,7 +13,7 @@ readdirSync("./dist/events")
 	.filter(path => path.endsWith(".js"))
 	.forEach(file => require(`./events/${file}`))
 
-export async function main() {
+export async function main(): Promise<void> {
 	if (!db) return console.error("DB is not ready yet!")
 	const config = (await db.collection<Config>("config").findOne({ name: "config" }))!,
 		stationData = await fetch("https://emel.city-platform.com/opendata/gira/station/list", {
@@ -21,7 +21,12 @@ export async function main() {
 		})
 			.then(r => r.json() as Promise<GiraListStationsResponse>)
 			.then(d => d.features.filter(f => !config.buggedIDs.includes(parseInt(f.properties.id_expl))))
+			.catch(() => null)
 
+	if (!stationData) {
+		setTimeout(main, 10_000)
+		return
+	}
 	await db.collection<StationData>("stations").bulkWrite(
 		stationData.map(f => ({
 			updateOne: {
