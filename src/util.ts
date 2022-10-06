@@ -9,7 +9,7 @@ export function crosspost(channelId: string, messageId: string) {
 	})
 }
 
-export async function sendWebhookMessage(options: WebhookMessageOptions, wait = false) {
+export async function sendWebhookMessage(options: WebhookMessageOptions, wait = true) {
 	let req = await fetch(`${process.env.DISCORD_WEBHOOK_URL}?wait=${wait}`, {
 		method: "POST",
 		body: JSON.stringify(options),
