@@ -1,4 +1,4 @@
-import { yellow, red, green, blue, underline, unstyle } from "ansi-colors"
+import { yellow, red, green, blue, underline } from "ansi-colors"
 import { db } from "../dbConnection"
 import { Config, crosspost, sendWebhookMessage, StationData } from "../util"
 
@@ -14,7 +14,7 @@ db.collection<StationData>("stations")
 			const oldValue = change.fullDocumentBeforeChange?.[updatedKey as keyof StationData]
 			if (oldValue)
 				console.log(
-					(isFavouriteStation ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
+					(isFavouriteStation ? underline : (s: string) => s)(
 						`Property ${yellow(updatedKey)} changed from ${red(`${oldValue}`)} to ${green(`${updatedValue}`)} on station ${blue(
 							`${fullDocument.id}`
 						)}`
@@ -22,7 +22,7 @@ db.collection<StationData>("stations")
 				)
 			else
 				console.log(
-					(isFavouriteStation ? underline : process.env.NODE_ENV === "production" ? unstyle : (s: string) => s)(
+					(isFavouriteStation ? underline : (s: string) => s)(
 						`Property ${yellow(updatedKey)} updated to ${green(`${updatedValue}`)} on station ${blue(`${fullDocument.id}`)}`
 					)
 				)
