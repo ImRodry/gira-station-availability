@@ -34,7 +34,9 @@ db.collection<StationData>("stations")
 				const message = await sendWebhookMessage({
 					content: `${getEmojiForChange(updatedValue, oldValue)} ${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação __${
 						fullDocument.name
-					}__ passou de _${oldValue}_ para **${updatedValue}**`,
+					}__ passou de _${oldValue}_ para **${updatedValue}** ${
+						config.toBeReleased.includes(fullDocument.id) && updatedValue === "active" ? "🎉 **NOVA ESTAÇÃO** 🎉" : ""
+					}`,
 				}).then(res => res.json() as Promise<Message>)
 
 				if (config.favouriteProps.includes(updatedKey as keyof StationData)) await crosspost(message.channel_id, message.id)
