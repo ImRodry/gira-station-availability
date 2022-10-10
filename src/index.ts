@@ -48,27 +48,27 @@ export async function main(): Promise<void> {
 			},
 		}))
 	)
-	await db
-		.collection<StasData>("stats")
-		.bulkWrite(
-			stationData.map(f => ({
-				updateOne: {
-					filter: { id: parseInt(f.properties.id_expl) },
-					update: {
-						$push: {
-							stats: {
-								updatedAt: Date.parse(f.properties.update_date),
-								numBikes: f.properties.num_bicicletas,
-								status: f.properties.estado,
-							},
-						},
-					},
-					upsert: true,
-				},
-			}))
-			// Ignore errors due to duplicate entries
-		)
-		.catch(() => null)
+	// await db
+	// 	.collection<StasData>("stats")
+	// 	.bulkWrite(
+	// 		stationData.map(f => ({
+	// 			updateOne: {
+	// 				filter: { id: parseInt(f.properties.id_expl) },
+	// 				update: {
+	// 					$push: {
+	// 						stats: {
+	// 							updatedAt: Date.parse(f.properties.update_date),
+	// 							numBikes: f.properties.num_bicicletas,
+	// 							status: f.properties.estado,
+	// 						},
+	// 					},
+	// 				},
+	// 				upsert: true,
+	// 			},
+	// 		}))
+	// 		// Ignore errors due to duplicate entries
+	// 	)
+	// 	.catch(() => null)
 
 	setTimeout(main, 10_000)
 }
