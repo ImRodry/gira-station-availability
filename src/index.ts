@@ -70,7 +70,7 @@ export async function main(): Promise<void> {
 	// 	)
 	// 	.catch(() => null)
 
-	setTimeout(main, 10_000)
+	setTimeout(main, 1000)
 }
 
 interface StasData {
