@@ -5,6 +5,12 @@ import { Config, crosspost, sendWebhookMessage, StationData } from "../util"
 db.collection<StationData>("stations")
 	.watch([], { fullDocumentBeforeChange: "whenAvailable" })
 	.on("change", async change => {
+		if (change.operationType === "insert") {
+			const message = await sendWebhookMessage({
+				content: `🎉**NOVA ESTAÇÃO EM TESTES!**🎉\nA estação ${change.fullDocument.name} foi adicionada ao sistema no estado _${change.fullDocument.status}_ e com __${change.fullDocument.numDocks}__ docas. A estação encontra-se nas coordenadas ${change.fullDocument.coordinates[1]}, ${change.fullDocument.coordinates[0]}.`,
+			}).then(r => r.json() as Promise<Message>)
+			await crosspost(message.channel_id, message.id)
+		}
 		if (change.operationType !== "update") return
 		const fullDocument = (await db.collection<StationData>("stations").findOne({ _id: change.documentKey._id }))!,
 			config = (await db.collection<Config>("config").findOne({ name: "config" }))!,
