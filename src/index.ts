@@ -49,7 +49,7 @@ export async function main(): Promise<void> {
 		}))
 	)
 	// await db
-	// 	.collection<StasData>("stats")
+	// 	.collection<StatsData>("stats")
 	// 	.bulkWrite(
 	// 		stationData.map(f => ({
 	// 			updateOne: {
@@ -73,7 +73,7 @@ export async function main(): Promise<void> {
 	setTimeout(main, 1000)
 }
 
-interface StasData {
+interface StatsData {
 	id: number
 	stats: {
 		updatedAt: number

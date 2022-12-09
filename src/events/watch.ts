@@ -10,6 +10,7 @@ db.collection<StationData>("stations")
 				content: `🎉 **NOVA ESTAÇÃO EM TESTES!** 🎉\nA estação __${change.fullDocument.name}__ foi adicionada ao sistema no estado _${change.fullDocument.status}_ e com **${change.fullDocument.numDocks}** docas. A estação encontra-se nas coordenadas \`${change.fullDocument.coordinates[1]}, ${change.fullDocument.coordinates[0]}\`.`,
 			}).then(r => r.json() as Promise<Message>)
 			await crosspost(message.channel_id, message.id)
+			await db.collection<Config>("config").updateOne({ name: "config" }, { $push: { toBeReleased: change.fullDocument.id } })
 		}
 		if (change.operationType !== "update") return
 		const fullDocument = (await db.collection<StationData>("stations").findOne({ _id: change.documentKey._id }))!,
@@ -32,20 +33,20 @@ db.collection<StationData>("stations")
 						`Property ${yellow(updatedKey)} updated to ${green(`${updatedValue}`)} on station ${blue(`${fullDocument.id}`)}`
 					)
 				)
-			if (
-				config.favouriteProps.includes(updatedKey as keyof StationData) ||
-				isFavouriteStation ||
-				(config.toBeReleased.includes(fullDocument.id) && change.fullDocumentBeforeChange?.status === "repair")
-			) {
+			if (config.favouriteProps.includes(updatedKey as keyof StationData) || isFavouriteStation) {
 				const message = await sendWebhookMessage({
 					content: `${getEmojiForChange(updatedValue, oldValue)} ${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação __${
 						fullDocument.name
-					}__ passou de _${oldValue}_ para **${updatedValue}** ${
-						config.toBeReleased.includes(fullDocument.id) && updatedValue === "active" ? "🎉 **NOVA ESTAÇÃO** 🎉" : ""
-					}`,
+					}__ passou de _${oldValue}_ para **${updatedValue}**`,
 				}).then(res => res.json() as Promise<Message>)
 
 				if (config.favouriteProps.includes(updatedKey as keyof StationData)) await crosspost(message.channel_id, message.id)
+			} else if (config.toBeReleased.includes(fullDocument.id) && updatedValue === "active") {
+				const message = await sendWebhookMessage({
+					content: `🎉 **ESTAÇÃO ABERTA!** 🎉\nA estação __${fullDocument.name}__ acabou de ser ativada com **${fullDocument.numDocks}** docas e ${fullDocument.numBikes} bicicletas. A estação encontra-se nas coordenadas \`${fullDocument.coordinates[1]}, ${fullDocument.coordinates[0]}\`.`,
+				}).then(r => r.json() as Promise<Message>)
+				await crosspost(message.channel_id, message.id)
+				await db.collection<Config>("config").updateOne({ name: "config" }, { $pull: { toBeReleased: fullDocument.id } })
 			}
 		}
 	})
