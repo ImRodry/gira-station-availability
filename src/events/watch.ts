@@ -60,7 +60,7 @@ function getEmojiForChange<T extends ValueOf<StationData>>(updatedValue: T, oldV
 			else return "⚒️"
 		}
 		case "number": {
-			if (updatedValue > (oldValue ?? 0)) return "📈"
+			if (updatedValue > ((oldValue as (T & number) | undefined) ?? 0)) return "📈"
 			else return "📉"
 		}
 		default:
