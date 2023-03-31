@@ -1,12 +1,25 @@
 import { setTimeout } from "node:timers/promises"
 
-export function crosspost(channelId: string, messageId: string) {
-	return fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/crosspost`, {
+export async function crosspost(channelId: string, messageId: string) {
+	let req = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/crosspost`, {
 		method: "POST",
 		headers: {
 			Authorization: `Bot ${process.env.DISCORD_TOKEN}`,
 		},
 	})
+
+	while (req.status === 429) {
+		console.log("Got rate limited")
+		const rateLimitReset = parseInt(req.headers.get("x-ratelimit-reset")!)
+		await setTimeout(rateLimitReset - Date.now())
+		req = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/crosspost`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bot ${process.env.DISCORD_TOKEN}`,
+			},
+		})
+	}
+	return req
 }
 
 export async function sendWebhookMessage(options: WebhookMessageOptions, wait = true) {
