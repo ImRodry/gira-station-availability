@@ -33,7 +33,13 @@ db.collection<StationData>("stations")
 						`Property ${yellow(updatedKey)} updated to ${green(`${updatedValue}`)} on station ${blue(`${fullDocument.id}`)}`
 					)
 				)
-			if (config.favouriteProps.includes(updatedKey as keyof StationData) || isFavouriteStation) {
+			if (config.toBeReleased.includes(fullDocument.id) && updatedValue === "active") {
+				const message = await sendWebhookMessage({
+					content: `🎉 **ESTAÇÃO ABERTA!** 🎉\nA estação __${fullDocument.name}__ acabou de ser ativada com **${fullDocument.numDocks}** docas e ${fullDocument.numBikes} bicicletas. A estação encontra-se nas coordenadas \`${fullDocument.coordinates[1]}, ${fullDocument.coordinates[0]}\`.`,
+				}).then(r => r.json() as Promise<Message>)
+				await crosspost(message.channel_id, message.id)
+				await db.collection<Config>("config").updateOne({ name: "config" }, { $pull: { toBeReleased: fullDocument.id } })
+			} else if (config.favouriteProps.includes(updatedKey as keyof StationData) || isFavouriteStation) {
 				const message = await sendWebhookMessage({
 					content: `${getEmojiForChange(updatedValue, oldValue)} ${keysToStrings[updatedKey as keyof typeof keysToStrings]} da estação __${
 						fullDocument.name
@@ -41,12 +47,6 @@ db.collection<StationData>("stations")
 				}).then(res => res.json() as Promise<Message>)
 
 				if (config.favouriteProps.includes(updatedKey as keyof StationData)) await crosspost(message.channel_id, message.id)
-			} else if (config.toBeReleased.includes(fullDocument.id) && updatedValue === "active") {
-				const message = await sendWebhookMessage({
-					content: `🎉 **ESTAÇÃO ABERTA!** 🎉\nA estação __${fullDocument.name}__ acabou de ser ativada com **${fullDocument.numDocks}** docas e ${fullDocument.numBikes} bicicletas. A estação encontra-se nas coordenadas \`${fullDocument.coordinates[1]}, ${fullDocument.coordinates[0]}\`.`,
-				}).then(r => r.json() as Promise<Message>)
-				await crosspost(message.channel_id, message.id)
-				await db.collection<Config>("config").updateOne({ name: "config" }, { $pull: { toBeReleased: fullDocument.id } })
 			}
 		}
 	})
