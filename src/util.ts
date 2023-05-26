@@ -9,9 +9,10 @@ export async function crosspost(channelId: string, messageId: string) {
 	})
 
 	while (req.status === 429) {
-		console.log("Got rate limited")
-		const rateLimitReset = parseInt(req.headers.get("x-ratelimit-reset")!)
-		await setTimeout(rateLimitReset - Date.now())
+		const rateLimitReset = parseFloat(req.headers.get("x-ratelimit-reset")!) * 1000, // Header comes in seconds with decimal point
+			waitMs = rateLimitReset - Date.now()
+		console.log(`Got rate limited, retrying in ${waitMs / 1000} seconds`)
+		await setTimeout(waitMs)
 		req = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/crosspost`, {
 			method: "POST",
 			headers: {
