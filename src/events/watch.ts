@@ -57,7 +57,8 @@ function getEmojiForChange<T extends ValueOf<StationData>>(updatedValue: T, oldV
 	switch (typeof updatedValue) {
 		case "string": {
 			if (updatedValue === "active") return "✅"
-			else return "⚒️"
+			else if (updatedValue === "repair") return "⚒️"
+			else return "🏷️" // to be used for name changes
 		}
 		case "number": {
 			if (updatedValue > ((oldValue as (T & number) | undefined) ?? 0)) return "📈"
