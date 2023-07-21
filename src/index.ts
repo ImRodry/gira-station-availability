@@ -1,8 +1,10 @@
 if (process.env.NODE_ENV !== "production") require("dotenv").config()
 require("./dbConnection")
 import { readdirSync } from "node:fs"
+import { IntentsBitField } from "discord.js"
 import { db } from "./dbConnection"
 import { Config, GiraListStationsResponse, StationData } from "./util"
+import GiraClient from "./lib/GiraClient"
 
 if (!process.env.GIRA_API_KEY) {
 	console.log("No API key provided. Please set the GIRA_API_KEY environment variable.")
@@ -12,6 +14,8 @@ if (!process.env.GIRA_API_KEY) {
 readdirSync("./dist/events")
 	.filter(path => path.endsWith(".js"))
 	.forEach(file => require(`./events/${file}`))
+
+export const client = new GiraClient({ intents: [IntentsBitField.Flags.Guilds] })
 
 export async function main(): Promise<void> {
 	if (!db) return console.error("DB is not ready yet!")

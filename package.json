@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@discordjs/collection": "^1.5.1",
 		"ansi-colors": "^4.1.3",
+		"discord.js": "^14.12.0-dev.1688817865-df40dcd.0",
 		"mongodb": "^5.7.0",
 		"typescript": "^5.1.6"
 	},
