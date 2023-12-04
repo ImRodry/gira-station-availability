@@ -1,27 +1,26 @@
 {
-	"name": "gira-station-availability",
+	"name": "lisbon-transport-bot",
 	"version": "1.0.0",
 	"description": "",
 	"main": "dist/index.js",
 	"scripts": {
-		"start": "node --enable-source-maps .",
+		"start": "set NODE_EXTRA_CA_CERTS=src/certs/metro.pem && node --enable-source-maps .",
+		"compile": "rm dist -r && tsc -w",
 		"postinstall": "tsc"
 	},
 	"keywords": [],
-	"author": "",
-	"license": "ISC",
+	"author": "Rodry",
+	"license": "MIT",
 	"engines": {
-		"node": "18.x"
+		"node": "20.x"
 	},
 	"dependencies": {
-		"@discordjs/collection": "^1.5.1",
-		"ansi-colors": "^4.1.3",
-		"discord.js": "^14.12.0-dev.1688817865-df40dcd.0",
-		"mongodb": "^5.7.0",
-		"typescript": "^5.1.6"
+		"discord.js": "^14.13.0",
+		"mongodb": "^6.2.0",
+		"typescript": "^5.2.2"
 	},
 	"devDependencies": {
-		"@types/node": "18",
+		"@types/node": "^20.8.9",
 		"dotenv": "^16.3.1"
 	}
 }

@@ -1,9 +1,13 @@
 import { client } from "../index"
-import { ids } from "../config.json"
 
 client.on("ready", async () => {
-	console.log(`Logged in as ${client.user.tag}`)
+	console.log(`Logged in as ${client.user.tag}!`)
 
-	const guild = client.guilds.cache.get(ids.guild),
-		[guildCommands, globalCommands] = client.commands.partition(c => !c.global)
+	const guild = client.guilds.cache.get("440838503560118273")!,
+		[guildCommands, globalCommands] = client.commands.partition(c => c.devOnly)
+
+	// Replace all old guild commands since those have no delay
+	await client.application.commands.set([...globalCommands.values()])
+	await guild.commands.set([...guildCommands.values()])
+	console.log("Updated all commands")
 })

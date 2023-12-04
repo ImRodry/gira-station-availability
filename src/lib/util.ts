@@ -23,6 +23,39 @@ export async function crosspost(channelId: string, messageId: string) {
 	return req
 }
 
+/**
+ * Sends a request to the metro API with the correct authorization token and parses it
+ * @param endpoint the API endpoint to fetch, without the leading /
+ * @param init extra data to send in the request
+ * @returns A JSON response or null if the request fails or the response is not JSON
+ */
+export async function makeMetroRequest<T>(endpoint: string, init: RequestInit = {}) {
+	return await fetch(`https://api.metrolisboa.pt:8243/estadoServicoML/1.0.1/${endpoint}`, {
+		...init,
+		headers: {
+			Authorization: `Bearer ${process.env.METRO_TOKEN}`,
+			...init.headers,
+		},
+	})
+		.then(r => r.json() as Promise<MetroResponse<T>>)
+		.catch(console.error)
+}
+
+/**
+ * Correctly parses a malformed array string into an array object of strings. Malformed here is an array without quotation marks for the inner strings
+ * @param input malformed array string
+ * @returns Parsed array
+ */
+export function parseMalformedArray(input: string): string[] {
+	return (
+		input
+			// Remove square brackets and whitespace
+			.replace(/\[|\]|\s/g, "")
+			// Split the string into an array using a comma as the delimiter
+			.split(",")
+	)
+}
+
 export async function sendWebhookMessage(options: WebhookMessageOptions, wait = true) {
 	let req = await fetch(`${process.env.DISCORD_WEBHOOK_URL}?wait=${wait}`, {
 		method: "POST",
@@ -92,4 +125,19 @@ export interface Config {
 	toBeReleased: number[]
 	favouriteProps: (keyof StationData)[]
 	buggedIDs: number[]
+}
+
+export interface MetroResponse<T> {
+	resposta: T
+	codigo: string
+}
+
+export interface MetroStationData {
+	stop_id: string
+	stop_name: string
+	stop_lat: string
+	stop_lon: string
+	stop_url: string
+	linha: string
+	zone_id: "L" | "C"
 }

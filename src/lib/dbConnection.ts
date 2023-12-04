@@ -1,5 +1,4 @@
 import { MongoClient } from "mongodb"
-import { main } from "./index"
 
 const url = process.env.MONGO_URL
 if (!url) {
@@ -14,5 +13,4 @@ export let db = mongoClient.db()
 mongoClient.connect().then(() => {
 	db = mongoClient.db()
 	console.log("Connected to MongoDB!")
-	main()
 })
