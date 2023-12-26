@@ -11,7 +11,7 @@
 	"author": "",
 	"license": "ISC",
 	"engines": {
-		"node": "18.x"
+		"node": ">=20.x"
 	},
 	"dependencies": {
 		"@discordjs/collection": "^2.0.0",
@@ -20,7 +20,7 @@
 		"typescript": "^5.3.2"
 	},
 	"devDependencies": {
-		"@types/node": "18",
+		"@types/node": "^20.10.6",
 		"dotenv": "^16.3.1"
 	}
 }
