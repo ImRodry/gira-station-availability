@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, EmbedBuilder } from "discord.js"
+import { ApplicationCommandOptionType, Colors, EmbedBuilder } from "discord.js"
 import { Command } from "../lib/imports"
 import { MetroStationData, makeMetroRequest, parseMalformedArray } from "../lib/util"
 
@@ -190,18 +190,97 @@ const command: Command = {
 			case "estado": {
 				const line = interaction.options.getString("linha", true) as keyof typeof lineColors | "todos",
 					data = await makeMetroRequest<UnionOrIntersection<[YellowLineStatus, BlueLineStatus, GreenLineStatus, RedLineStatus]>>(
-						`estadoLinhas/${line}`
+						`estadoLinha/${line}`
 					)
 
 				if (!data)
 					return void (await interaction.editReply(
 						"Ocorreu um erro ao obter os estados das linhas. Se o erro persistir, por favor contacta o desenvolvedor."
 					))
-				const embed = new EmbedBuilder({})
+				const embed = new EmbedBuilder({
+					title: "Estado das linhas",
+					color: Object.entries(data.resposta)
+						.filter(([k]) => !k.startsWith("tipo_msg"))
+						.every(([, v]) => v === " Ok")
+						? Colors.Green
+						: Colors.Red,
+					fields: [
+						...("amarela" in data.resposta ? [{ name: "Linha Amarela", value: data.resposta.amarela }] : []),
+						...("azul" in data.resposta ? [{ name: "Linha Azul", value: data.resposta.azul }] : []),
+						...("verde" in data.resposta ? [{ name: "Linha Verde", value: data.resposta.verde }] : []),
+						...("vermelha" in data.resposta ? [{ name: "Linha Vermelha", value: data.resposta.vermelha }] : []),
+					],
+				})
+
+				await interaction.editReply({ embeds: [embed] })
+				break
+			}
+			case "tempo": {
+				const line = interaction.options.getString("linha", true) as keyof typeof lineColors,
+					data = await makeMetroRequest<TempoEspera[] | string>(`tempoEspera/Linha/${line.toLowerCase()}`),
+					infoEstacoes = await makeMetroRequest<MetroStationData[]>("infoEstacao/todos"),
+					infoDestinos = await makeMetroRequest<Destino[]>("infoDestinos/todos")
+
+				if (!data || !infoDestinos)
+					return void (await interaction.editReply(
+						"Ocorreu um erro ao obter os tempos da linha. Se o erro persistir, por favor contacta o desenvolvedor."
+					))
+
+				if (typeof data.resposta === "string")
+					return void (await interaction.editReply({ embeds: [{ title: "Erro", description: data.resposta }] }))
+				// TODO replace with Object.groupBy in node v22
+				const timeByStation = data.resposta.reduce((acc, curr) => {
+						acc[curr.stop_id] ??= []
+						const newLength = acc[curr.stop_id].push(curr)
+						if (newLength === 2) acc[curr.stop_id].sort((a, b) => Number(a.destino) - Number(b.destino))
+						return acc
+					}, {} as Record<string, TempoEspera[]>),
+					embed = new EmbedBuilder({
+						title: `Tempos de espera da Linha ${line}`,
+						color: lineColors[line],
+						fields: Object.entries(timeByStation).map(([station, times]) => ({
+							name: `${infoEstacoes?.resposta.find(s => s.stop_id === station)?.stop_name ?? `Estação desconhecida (${station})`}`,
+							value: times
+								.map(
+									x =>
+										`Destino: **${
+											infoDestinos.resposta.find(d => d.id_destino === x.destino)?.nome_destino ?? `Destino desconhecido (${x.destino})`
+										}**\nTempos:\n${Array(3)
+											.fill(0)
+											// todo filter out duplicated times (turn into array?)
+											.map((_, i) => `Comboio ${i + 1}: ${parseSeconds(x[`tempoChegada${(i + 1) as 1 | 2 | 3}`])}`)
+											.join("\n")}`
+								)
+								.join("\n\n"),
+							inline: true,
+						})),
+					})
+
+				await interaction.editReply({ embeds: [embed] })
+				break
 			}
 		}
 	},
 }
+
+function parseSeconds(seconds: string | number) {
+	seconds = Number(seconds)
+	return `${Math.floor(seconds / 60)}m${seconds % 60}s`
+}
+
+// function parseMadeUpArray<T extends Record<string, unknown>, K extends string[]>(obj: T, keys: K) {
+// 	const entries = Object.entries(obj),
+// 		newObj = Object.fromEntries(entries.filter(([k]) => !keys.some(key => k.startsWith(key)))) as Partial<TransformKeys<T, K>>
+
+// 	for (const key of keys) {
+// 		const values = entries
+// 			.filter(([k]) => k.startsWith(key as string))
+// 			.sort(([a], [b]) => a.localeCompare(b))
+// 			.map(([, v]) => v)
+// 		if (values.length) newObj[key as keyof T] = values
+// 	}
+// 	return newObj
+// }
 
 export default command
 
@@ -234,4 +313,30 @@ interface GreenLineStatus {
 interface RedLineStatus {
 	vermelha: string
 	tipo_msg_vm: string
+}
+
+interface TempoEspera {
+	stop_id: string
+	cais: string
+	hora: string
+	comboio: string
+	tempoChegada1: string
+	comboio2: string
+	tempoChegada2: string
+	comboio3: string
+	tempoChegada3: string
+	destino: string
+	sairServico: string
+}
+
+type TransformKeys<T, K extends string> = {
+	[P in keyof T as P extends `${K}${infer R}` ? (R extends `${number}` ? `${K}` : P) : P]: P extends `${K}${infer R}` ? T[P][] : T[P]
+}
+
+// Usage:
+type NewTempoEspera = TransformKeys<TempoEspera, "combedgrtoio" | "tempoChegada">
+
+interface Destino {
+	id_destino: string
+	nome_destino: string
 }

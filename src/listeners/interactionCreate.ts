@@ -2,7 +2,7 @@ import { client } from "../index"
 import { ids } from "../config.json"
 import { MetroResponse, MetroStationData, makeMetroRequest } from "../lib/util"
 
-declare let metroStations: MetroResponse<MetroStationData[]> & { lastUpdated: number }
+let metroStations: MetroResponse<MetroStationData[]> & { lastUpdated: number }
 
 client.on("interactionCreate", async interaction => {
 	if (interaction.isAutocomplete()) {
@@ -27,6 +27,7 @@ client.on("interactionCreate", async interaction => {
 								s => s.stop_name.toLowerCase().startsWith(option.value.toLowerCase()) || s.stop_id.startsWith(option.value.toUpperCase())
 							)
 							.map(s => ({ name: s.stop_name, value: s.stop_id }))
+							.slice(0, 25)
 			)
 		}
 	}
