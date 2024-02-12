@@ -43,10 +43,10 @@ bson@^6.2.0:
   resolved "https://registry.yarnpkg.com/bson/-/bson-6.2.0.tgz#4b6acafc266ba18eeee111373c2699304a9ba0a3"
   integrity sha512-ID1cI+7bazPDyL9wYy9GaQ8gEEohWvcUl/Yf0dIdutJxnmInEEyCsb4awy/OiBfall7zBA179Pahi3vCdFze3Q==
 
-dotenv@^16.3.1:
-  version "16.3.1"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.3.1.tgz#369034de7d7e5b120972693352a3bf112172cc3e"
-  integrity sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==
+dotenv@^16.4.2:
+  version "16.4.2"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.2.tgz#7ca798f89ae2011846bbdbf6470785307754120d"
+  integrity sha512-rZSSFxke7d9nYQ5NeMIwp5PP+f8wXgKNljpOb7KtH6SKW1cEqcXAz9VSJYVLKe7Jhup/gUYOkaeSVyK8GJ+nBg==
 
 memory-pager@^1.0.2:
   version "1.5.0"
