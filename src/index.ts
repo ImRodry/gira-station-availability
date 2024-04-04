@@ -70,7 +70,7 @@ export async function main(): Promise<void> {
 	// 	)
 	// 	.catch(() => null)
 
-	setTimeout(main, 1000)
+	setTimeout(main, 5 * 60_000)
 }
 
 interface StatsData {
