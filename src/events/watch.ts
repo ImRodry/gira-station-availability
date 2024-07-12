@@ -33,7 +33,12 @@ db.collection<StationData>("stations")
 						`Property ${yellow(updatedKey)} updated to ${green(`${updatedValue}`)} on station ${blue(`${fullDocument.id}`)}`
 					)
 				)
-			if (config.toBeReleased.includes(fullDocument.id) && updatedValue === "active") {
+			if (
+				config.toBeReleased.includes(fullDocument.id) &&
+				updatedValue === "active" &&
+				// Check if it was created more than a day ago (prevent false positives)
+				Date.now() - fullDocument._id.getTimestamp().getTime() > 24 * 60 * 60 * 1000
+			) {
 				const message = await sendWebhookMessage({
 					content: `🎉 **ESTAÇÃO ABERTA!** 🎉\nA estação __${fullDocument.name}__ acabou de ser ativada com **${fullDocument.numDocks}** docas e ${fullDocument.numBikes} bicicletas. A estação encontra-se nas coordenadas \`${fullDocument.coordinates[1]}, ${fullDocument.coordinates[0]}\`.`,
 				}).then(r => r.json() as Promise<Message>)
