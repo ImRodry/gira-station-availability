@@ -4,11 +4,6 @@ import { readdirSync } from "node:fs"
 import { db } from "./dbConnection"
 import { Config, GiraListStationsResponse, StationData } from "./util"
 
-if (!process.env.GIRA_API_KEY) {
-	console.log("No API key provided. Please set the GIRA_API_KEY environment variable.")
-	process.exit(1)
-}
-
 readdirSync("./dist/events")
 	.filter(path => path.endsWith(".js"))
 	.forEach(file => require(`./events/${file}`))
@@ -16,9 +11,9 @@ readdirSync("./dist/events")
 export async function main(): Promise<void> {
 	if (!db) return console.error("DB is not ready yet!")
 	const config = (await db.collection<Config>("config").findOne({ name: "config" }))!,
-		stationData = await fetch("https://emel.city-platform.com/opendata/gira/station/list", {
-			headers: { api_key: process.env.GIRA_API_KEY! },
-		})
+		stationData = await fetch(
+			"https://emel.city-platform.com/maps/wfs?REQUEST=GetFeature&typeNames=emel_gira_stations&outputFormat=application/json"
+		)
 			.then(r => r.json() as Promise<GiraListStationsResponse>)
 			.then(d => d.features.filter(f => !config.buggedIDs.includes(parseInt(f.properties.id_expl))))
 			.catch(() => null)
