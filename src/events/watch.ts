@@ -7,7 +7,7 @@ db.collection<StationData>("stations")
 	.on("change", async change => {
 		if (change.operationType === "insert") {
 			const message = await sendWebhookMessage({
-				content: `🎉 **NOVA ESTAÇÃO EM TESTES!** 🎉\nA estação __${change.fullDocument.name}__ foi adicionada ao sistema no estado _${change.fullDocument.status}_ e com **${change.fullDocument.numDocks}** docas. A estação encontra-se nas coordenadas \`${change.fullDocument.coordinates[1]}, ${change.fullDocument.coordinates[0]}\`.`,
+				content: `🎉 **NOVA ESTAÇÃO EM TESTES!** 🎉\nA estação __${change.fullDocument.name}__ (${change.fullDocument.id}) foi adicionada ao sistema no estado _${change.fullDocument.status}_ e com **${change.fullDocument.numDocks}** docas. A estação encontra-se nas coordenadas \`${change.fullDocument.coordinates[1]}, ${change.fullDocument.coordinates[0]}\`.`,
 			}).then(r => r.json() as Promise<Message>)
 			await crosspost(message.channel_id, message.id)
 			await db.collection<Config>("config").updateOne({ name: "config" }, { $push: { toBeReleased: change.fullDocument.id } })
