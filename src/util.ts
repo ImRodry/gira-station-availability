@@ -92,4 +92,5 @@ export interface Config {
 	toBeReleased: number[]
 	favouriteProps: (keyof StationData)[]
 	buggedIDs: number[]
+	saveStats: boolean
 }

@@ -22,57 +22,45 @@ export async function main(): Promise<void> {
 		setTimeout(main, 10_000)
 		return
 	}
+	const parsedData: StationData[] = stationData.map(f => ({
+		id: parseInt(f.properties.id_expl),
+		coordinates: f.geometry.coordinates[0],
+		name: f.properties.desig_comercial,
+		numBikes: f.properties.num_bicicletas,
+		numDocks: f.properties.num_docas,
+		bikePercentage: Math.round(f.properties.racio * 100),
+		status: f.properties.estado,
+		updatedAt: Date.parse(f.properties.update_date),
+	}))
 	await db.collection<StationData>("stations").bulkWrite(
-		stationData.map(f => ({
+		parsedData.map(({ id, ...station }) => ({
 			updateOne: {
-				filter: {
-					id: parseInt(f.properties.id_expl),
-				},
-				update: {
-					$set: {
-						coordinates: f.geometry.coordinates[0],
-						name: f.properties.desig_comercial,
-						numBikes: f.properties.num_bicicletas,
-						numDocks: f.properties.num_docas,
-						bikePercentage: Math.round(f.properties.racio * 100),
-						status: f.properties.estado,
-						updatedAt: Date.parse(f.properties.update_date),
-					},
-				},
+				filter: { id },
+				update: { $set: station },
 				upsert: true,
 			},
 		}))
 	)
-	// await db
-	// 	.collection<StatsData>("stats")
-	// 	.bulkWrite(
-	// 		stationData.map(f => ({
-	// 			updateOne: {
-	// 				filter: { id: parseInt(f.properties.id_expl) },
-	// 				update: {
-	// 					$push: {
-	// 						stats: {
-	// 							updatedAt: Date.parse(f.properties.update_date),
-	// 							numBikes: f.properties.num_bicicletas,
-	// 							status: f.properties.estado,
-	// 						},
-	// 					},
-	// 				},
-	// 				upsert: true,
-	// 			},
-	// 		}))
-	// 		// Ignore errors due to duplicate entries
-	// 	)
-	// 	.catch(() => null)
+	if (config.saveStats) {
+		const currHour = new Date().getHours()
+		if (currHour >= 6 || currHour < 2)
+			// Only track stats during service hours (6:00 - 2:00)
+			await db
+				.collection<StatsData>("stats")
+				.insertOne({
+					timestamp: Math.max(...parsedData.map(s => s.updatedAt)),
+					data: Object.fromEntries(parsedData.filter(s => s.status === "active").map(s => [s.id, s.numBikes])),
+					bikesAvailable: parsedData.reduce((acc, s) => acc + s.numBikes, 0),
+				})
+				// Ignore errors due to duplicate entries
+				.catch(() => null)
+	}
 
 	setTimeout(main, 5 * 60_000)
 }
 
 interface StatsData {
-	id: number
-	stats: {
-		updatedAt: number
-		numBikes: number
-		status: "repair" | "active"
-	}[]
+	timestamp: number
+	data: Record<number, number> // Station ID to number of bikes
+	bikesAvailable: number // Total number of bikes available across all stations
 }
