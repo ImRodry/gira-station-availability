@@ -9,10 +9,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install Node v20
+      - name: Install Node v24
         uses: actions/setup-node@v2
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install dependencies
         run: yarn
