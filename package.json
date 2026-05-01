@@ -11,7 +11,7 @@
 	"author": "",
 	"license": "ISC",
 	"engines": {
-		"node": ">=20.x"
+		"node": ">=24.x"
 	},
 	"dependencies": {
 		"ansi-colors": "^4.1.3",
